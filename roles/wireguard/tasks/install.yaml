@@ -1,0 +1,25 @@
+---
+
+- name: Install WireGuard
+  become: yes
+  apt:
+    name: wireguard
+
+- name: Keys generation
+  become: yes
+  ansible.builtin.shell: wg genkey | tee server.key | wg pubkey > server.pub
+  args:
+    chdir: /etc/wireguard/
+    creates: /etc/wireguard/server.pub
+
+- name: Setup configuration file
+  become: yes
+  ansible.builtin.copy:
+    src: wg0.conf
+    dest: /etc/wireguard/wg0.conf
+
+- name: Setup private key
+  become: yes
+  ansible.builtin.shell: echo "PrivateKey = $(cat server.key)" >> /etc/wireguard/wg0.conf
+  args:
+    chdir: /etc/wireguard/

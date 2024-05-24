@@ -1,0 +1,4 @@
+- name: Setup VPN
+  hosts: pivpn
+  roles:
+    - wireguard

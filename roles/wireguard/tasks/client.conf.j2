@@ -1,0 +1,9 @@
+[Interface]
+PrivateKey={{ item.stdout }}
+Address=10.0.0.{{ id + 2 }}/8
+SaveConfig=true
+
+[Peer]
+PublicKey={{ serverPubKey.stdout }}
+Endpoint={{ publicIP }}:51820
+AllowedIPs=0.0.0.0/0

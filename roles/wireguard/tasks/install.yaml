@@ -1,9 +1,26 @@
 ---
 
+#- name: Update and upgrade apt packages
+#  become: true
+#  apt:
+#    upgrade: yes
+#    update_cache: yes
+
+- name: Grab ip link status
+  command: ip link
+  register: ip_link
+  changed_when: False
+
+
 - name: Install WireGuard
   become: yes
   apt:
     name: wireguard
+
+- name: Install Iptables
+  become: yes
+  apt:
+    name: iptables
 
 - name: Keys generation
   become: yes
@@ -23,3 +40,21 @@
   ansible.builtin.shell: echo "PrivateKey = $(cat server.key)" >> /etc/wireguard/wg0.conf
   args:
     chdir: /etc/wireguard/
+
+- name: Create wg0 interface
+  become: yes
+  command: wg-quick up wg0
+  when:
+    - '"wg0" not in ip_link.stdout'
+
+#- name: Assign ip address to wg0
+#  become: yes
+#  command: ip address add 10.0.0.1 dev wg0
+#  when:
+#    - '"wg0" not in ip_link.stdout'
+#
+#- name: Up wg0 interface
+#  become: yes
+#  command: ip link set dev wg0 up
+#  when:
+#    - '"wg0" not in ip_link.stdout'

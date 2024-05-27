@@ -1,2 +1,7 @@
-- import_tasks: install.yaml
+- name: Install wireguard with configuration
+  import_tasks: install.yaml
+  tags: [wireguard]
+
+- name: Setup clients configuration
+  import_tasks: clients.yaml
   tags: [wireguard]

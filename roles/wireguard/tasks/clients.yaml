@@ -1,0 +1,59 @@
+---
+
+- name: Generate clients keys
+  become: yes
+  ansible.builtin.shell: wg genkey | tee "{{ item }}.key" | wg pubkey > "{{ item }}.pub"
+  args:
+    chdir: /etc/wireguard/
+    creates: /etc/wireguard/{{ item }}.pub
+  loop: "{{ clients }}"
+
+- name: Add client keys to server
+  become: yes
+  ansible.builtin.shell: wg set wg0 peer $(cat "{{ item }}.pub") allowed-ips "10.0.0.{{ 2 + index }}"/32
+  args:
+    chdir: /etc/wireguard/
+    creates: /etc/wireguard/{{ item }}.psk
+  loop: "{{ clients }}"
+  loop_control:
+    index_var: index
+
+- name: Getting client keys
+  become: true
+  ansible.builtin.shell: cat /etc/wireguard/{{ item }}.key
+  loop: "{{ clients }}"
+  register: clientKeys
+
+- name: Getting server pub key
+  become: true
+  ansible.builtin.shell: cat /etc/wireguard/server.pub
+  register: serverPubKey
+
+- name: Generate client files
+  ansible.builtin.template:
+    src: client.conf.j2
+    dest: /tmp/client-{{ item.item }}.conf
+  loop: "{{ clientKeys.results }}"
+  loop_control:
+    index_var: id
+
+- name: Retrieve client configurations
+  ansible.builtin.fetch:
+    src: /tmp/client-{{ item }}.conf
+    dest: .clients/{{ item }}.conf
+  loop: "{{ clients }}"
+
+- name: Remove client keys
+  ansible.builtin.file:
+    path: /etc/wireguard/{{ item }}.key
+    state: absent
+  loop: "{{ clients }}"
+
+- name: Restart service wg0
+  ansible.builtin.systemd_service:
+    name: wg-quick@wg0.service
+    state: restarted
+    daemon_reload: true
+
+
+

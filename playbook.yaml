@@ -1,4 +1,8 @@
 - name: Setup VPN
   hosts: pivpn
+  vars:
+    clients:
+      - findmytube
+      - anilya
   roles:
     - wireguard
